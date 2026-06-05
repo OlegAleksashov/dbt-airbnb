@@ -1,0 +1,14 @@
+airbnb:
+  outputs:
+    dev:
+      type: snowflake
+      account: zeokwoq-bo41601
+      user: dbt
+      role: TRANSFORM
+      private_key_path: /Users/aleksashov/.ssh/snowflake_dbt_rsa_key.p8
+      private_key_passphrase: q
+      database: AIRBNB
+      schema: DEV
+      threads: 1
+      warehouse: COMPUTE_WH
+  target: dev
