@@ -1,76 +1,109 @@
 models:
   - name: dim_listings_cleansed
-    data_tests:
+    description: Cleansed table which contains Airbnb listings.
+    tests:
       - minimum_row_count:
           arguments:
             min_row_count: 1000
     columns:
      - name: listing_id
-       data_tests:
+       description: Primary key for the listing
+       tests:
          - unique
          - not_null
      - name: host_id
-       data_tests:
+       description: The hosts's id. References the host table.
+       tests:
          - not_null
          - relationships:
              arguments:
                to: ref('dim_hosts_cleansed')
                field: host_id
      - name: room_type
-       data_tests:
+       description: Type of the apartment / room
+       tests:
          - accepted_values:
              arguments:
                values: ['Entire home/apt', 'Private room', 'Shared room', 'Hotel room']
      - name: minimum_nights
-       data_tests:
+       description: '{{ doc("dim_listing_cleansed__minimum_nights") }}'
+       tests:
          - positive_values
 
   - name: dim_hosts_cleansed
+    description: Cleansed table which contains Airbnb hosts.
     config:
       contract:
         enforced: true
 
     columns:
       - name: host_id
+        description: Primary key for the host.
         data_type: integer
         constraints:
           - type: not_null
 
-        data_tests:
+        tests:
           - not_null
           - unique
       - name: host_name
+        description: Name of the host. Defaults to 'Anonymous' when not provided.
         data_type: string
         constraints:
           - type: not_null
-        data_tests:
+        tests:
           - not_null
       - name: is_superhost
+        description: Flag indicating whether the host is a superhost ('t') or not ('f').
         data_type: string
-        data_tests:
+        tests:
           - accepted_values:
               arguments:
                 values: [ 't', 'f' ]
       - name: updated_at
+        description: Timestamp of when the host record was last updated.
         data_type: timestamp
       - name: created_at
+        description: Timestamp of when the host record was created.
         data_type: timestamp
+
+  - name: dim_listings_with_hosts
+    tests:
+      - dbt_expectations.expect_table_row_count_to_equal_other_table:
+          arguments:
+            compare_model: source('airbnb', 'listings')
+    columns:
+      - name: price
+        tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: number
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              arguments:
+                quantile: .99
+                min_value: 50
+                max_value: 500
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                max_value: 5000
+              config:
+                severity: warn
 
   - name: fct_reviews
     columns:
           - name: listing_id
-            data_tests:
+            tests:
               - relationships:
                   arguments:
                     to: ref('dim_listings_cleansed')
                     field: listing_id
 
           - name: reviewer_name
-            data_tests:
+            tests:
               - not_null
 
           - name: review_sentiment
-            data_tests:
+            tests:
               - accepted_values:
                   arguments:
                     values: [ 'positive', 'neutral', 'negative' ]
