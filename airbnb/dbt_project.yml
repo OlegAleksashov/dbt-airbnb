@@ -39,6 +39,6 @@ models:
       +materialized: ephemeral
 
 data_tests:
-  +store-failures: true
+  +store_failures: true
   +schema: _test_failures
 
